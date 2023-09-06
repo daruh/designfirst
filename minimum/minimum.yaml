@@ -1,0 +1,8 @@
+openapi: 3.0.3
+servers: 
+  - url: api 
+info: 
+  title: Minimum Api
+  version: v1
+paths: {}
+  
