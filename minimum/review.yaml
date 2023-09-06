@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info: 
+  title: API
+  version: v1
+servers: 
+  - url: reviews 
+paths: 
+  /reviews:
+    get:
+      description: Get bunch of reviews
+      parameters: 
+        - name: maxRating
+          in:  query
+          schema:
+            type: number
+      responses: 
+        200:
+          description: a bunch of reviews
+      
+  
