@@ -30,6 +30,11 @@ Prefer code:
 curl -H "Prefer: code=404" http://localhost:8080/users/1/job-applications 
 ```
 
+`prism mock -p 8080 03.yml`
+```
+curl -H "Prefer: code=404" http://localhost:8080/foo 
+```
+
 # Use docker file
 ```
 docker compose -f docker-compose.yaml up

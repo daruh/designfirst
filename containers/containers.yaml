@@ -566,7 +566,7 @@ paths:
         - name: id
           in: path
           required: true
-          description: The ID of the vendor for which a collection of applications for that vendor will be returned.
+          description: The unique ID of the vendor for which a collection of applications for that vendor will be returned.
           schema: {
             "type" : "string"
           }

@@ -1,0 +1,5 @@
+{
+    "spectral.enable": true,
+    "spectral.rulesetFile": "rest-ruleset.yaml",
+    "spectral.run":"onType"
+}

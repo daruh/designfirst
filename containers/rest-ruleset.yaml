@@ -1,0 +1,1222 @@
+extends: "spectral:oas"
+
+rules:
+
+  # GLOBAL
+
+  snow-global-snow-atlas:
+    description: Must use "Snow Atlas" instead of "Atlas".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..[?(@property in ['description', 'summary'])]
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: /(?<!Snow )Atlas/gm
+
+
+  # INFO
+
+  snow-version-format:
+    description: Version must be in MAJOR.MINOR.PATCH format (e.g. 1.0.0).
+    message: "{{value}} | {{description}} See the info section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#info."
+    severity: error
+    given: $.info
+    then:
+      field: version
+      function: pattern
+      functionOptions:
+        match: "^\\d+.\\d+.\\d+"
+
+
+  # TAGS
+
+  openapi-tags-alphabetical: error
+
+  operation-tag-defined: error
+
+  snow-tags-sentence-case:
+    description: Tags must be in sentence case.
+    message: "{{value}} | {{description}} See the Tags section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#tags."
+    severity: error
+    given: $.tags.*
+    then:
+      field: name
+      function: pattern
+      functionOptions:
+        match: "^[A-Z][a-z]*"
+
+
+  # PATHS
+
+  path-keys-no-trailing-slash: error
+
+  snow-paths-kebab-case:
+    description: Paths must be kebab-case (with camelCase path parameters).
+    message: "{{property}} | {{description}}  See the URL Path Design section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#url-path-design)."
+    severity: error
+    given: $.paths[*]~
+    then:
+      function: pattern
+      functionOptions:
+       match: "^(\/|[a-z0-9-.]+|{[a-zA-Z0-9_]+})+$"
+
+  snow-paths-parameters-camel-case:
+    description: Path paramters must be camelCase.
+    message: "{{path}} | {{description}}  See the URL Path Design section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#url-path-design)."
+    severity: error
+    given: $..parameters[?(@.in == 'path')].name
+    then:
+      function: casing
+      functionOptions:
+        type: camel
+
+  snow-paths-starts-with-api:
+    description: Paths must start with /api/.
+    message: "{{property}} | {{description}} See the URL Path Design section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#url-path-design)."
+    severity: error
+    given: $.paths[*]~
+    then:
+      function: pattern
+      functionOptions:
+        match: "^/api/"
+
+  snow-paths-must-contain-a-version:
+    description: Paths must contain a version.
+    message: "{{property}} | {{description}} See the URL Path Design section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#url-path-design)."
+    severity: error
+    given: $.paths[*]~
+    then:
+      function: pattern
+      functionOptions:
+        match: "^.*\/v[0-9].*"
+  
+  snow-paths-must-have-summary:
+    description: Paths must have a summary.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get', 'put', 'post', 'delete', 'patch'])]
+    then:
+      field: summary
+      function: truthy
+
+  snow-paths-summary-starts-with-capital-letter:
+    description: Paths must have a summary that starts with a capital letter.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get', 'put', 'post', 'delete', 'patch'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          match: "^[A-Z][a-z]*"
+
+  snow-paths-summary-must-be-short:
+    description: The summary for an operation must not exceed 70 characters.
+    message: "{{value}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get', 'put', 'post', 'delete', 'patch'])]
+    then:
+      field: summary
+      function: length
+      functionOptions:
+        max: 70
+  
+  snow-paths-summary-get:
+    description: GET summaries should start with "Get".
+    message: "{{value}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          match: "^Get "
+
+  snow-paths-summary-post:
+    description: POST summaries should start with "Add".
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $.paths.*[?(@property in ['post'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          match: "^Add "
+
+  snow-paths-summary-put:
+    description: PUT summaries should start with "Replace".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['put'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          match: "^Replace "
+
+  snow-paths-summary-patch:
+    description: PATCH summaries should start with "Update".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['patch'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          match: "^Update "
+
+  snow-paths-summary-delete:
+    description: DELETE summaries should start with "Delete".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['delete'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          match: "^Delete "
+
+  snow-paths-summary-not-ends-with-period:
+    description: Paths must have a summary that does not end with ".".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get', 'put', 'post', 'delete', 'patch'])]
+    then:
+      - field: summary
+        function: truthy
+      - field: summary
+        function: pattern
+        functionOptions:
+          notMatch: "\\.$"
+
+  snow-paths-description-ends-with-period:
+    description: Paths must have a description that ends with ".".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get', 'put', 'post', 'delete', 'patch'])]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: "\\.$"
+
+  snow-paths-description-get:
+    description: A GET description must start with "Returns the details of a/an/the" for a singular resource, and "Returns a collection of" for a collection resource.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['get'])]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^(Returns the details of a |Returns the details of an |Returns the details of the |Returns a collection of )
+
+  snow-paths-description-post:
+    description: A POST description should start with "Creates a/an/the".
+    message: "{{value}} | {{description}}"
+    severity: warn
+    given: $.paths.*[?(@property in ['post'])]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^(Creates a |Creates an |Creates the )
+
+  snow-paths-description-put:
+    description: A PUT description must start with "Replaces a/an/the".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['put'])]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^(Replaces a |Replaces an |Replaces the )
+
+  snow-paths-description-patch:
+    description: A PATCH description must start with "Modifies".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['patch'])]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Modifies\s 
+  
+  snow-paths-description-delete:
+    description: A DELETE description must start with "Removes the given".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property in ['delete'])]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Removes the given\s
+
+  snow-paths-requiring-id:
+    description: DELETE, PATCH, and PUT on a path that does not end with a path parameter is uncommon.
+    message: "{{property}} | {{description}}"
+    severity: warn
+    given: $.paths[*].[delete,patch,put]^~
+    then:
+      function: pattern
+      functionOptions:
+        match: '/\}$/'
+
+
+  # PARAMETERS
+
+  snow-parameters-id-description:
+    description: The description must start with "The unique ID of the".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..parameters..[?(@.name && (@.name == 'id' || @.name.endsWith("Id")))]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The unique ID of the\s
+
+  snow-parameters-must-have-description:
+    description: Parameters must have a description.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..parameters.*
+    then:
+      field: description
+      function: truthy
+
+  snow-parameters-page_number-description:
+    description: The description must be "The page number.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..parameters..[?(@.name == 'page_number')]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The page number\.$
+
+  snow-properties-pagination-page_number-schema:
+    description: 'The schema should be: {"type": "integer", "default": 1}.'
+    message: "{{value}} | {{description}}"
+    severity: error
+    given: $..parameters..[?(@.name == 'page_number')].schema
+    then:
+      - field: type
+        function: pattern
+        functionOptions:
+          match: ^integer$
+      - field: default
+        function: truthy
+      - field: default
+        function: enumeration
+        functionOptions:
+          values:
+            - 1
+  
+  snow-parameters-page_size-description:
+    description: The description must be "The maximum number of items in the response.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..parameters..[?(@.name == 'page_size')]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The maximum number of items in the response\.$
+
+  snow-properties-pagination-page_size-schema:
+    description: 'The schema should be: {"type": "integer", "default": 100}.'
+    message: "{{value}} | {{description}}"
+    severity: error
+    given: $..parameters..[?(@.name == 'page_size')].schema
+    then:
+      - field: type
+        function: pattern
+        functionOptions:
+          match: ^integer$
+      - field: default
+        function: truthy
+      - field: default
+        function: enumeration
+        functionOptions:
+          values:
+            - 100
+
+  snow-query-parameter-not-allowed:
+    description: Query parameters are only allowed for GET.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths.*[?(@property != 'get')].parameters[*].in
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: ^query$
+
+
+  # PROPERTIES
+
+  snow-properties-camel-case:
+    description: Properties must be camelCase.
+    message: "{{property}} | {{description}}"
+    severity: error
+    given: $.components.schemas[?(@property != 'Pagination' && @property != 'PaginationResponse' && @.properties)].properties[?(@property != '_links')]~
+    then: 
+      field: properties
+      function: casing
+      functionOptions:
+        type: camel
+
+  snow-pagination-properties-snake-case:
+    description: Pagination properties must be snake_case.
+    message: "{{property}} | {{description}}"
+    severity: error
+    given: $.components.schemas[?((@property == 'Pagination' || @property == 'PaginationResponse') && @.properties)].properties.*~
+    then: 
+      field: properties
+      function: casing
+      functionOptions:
+        type: snake
+
+  snow-properties-enum-pascal-case:
+    description: Property enum values must be PascalCase.
+    message: "{{value}} | {{description}}"
+    severity: error
+    given: $..properties..enum.*
+    then:
+      function: casing
+      functionOptions:
+        type: pascal
+  
+  snow-properties-description-end-with-period:
+    description: Property descriptions should end in ".".
+    message: "{{value}} | {{description}}"
+    severity: error
+    given: $..properties.*
+    then:
+      field: description
+      function: pattern
+      functionOptions:
+        match: "\\.$"
+
+  snow-properties-boolean-description:
+    description: Boolean description must look like "```true if ...; otherwise, ```false``.`".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties[?(@.type && @.type == "boolean")]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^```true``` if .*\; otherwise, ```false```.
+
+  snow-properties-id-description:
+    description: The description must start with "The unique ID of the".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.id
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The unique ID of the\s
+
+  snow-properties-xId-description:
+    description: The description should start with "The unique ID of the".
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..schemas..properties.[?(@property.endsWith("Id"))]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The unique ID of the\s
+
+  snow-properties-xid-description:
+    description: If this is an ID, then the description should start with "The unique ID of the".
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..schemas..properties.[?(@property.endsWith("id") && @property != "id")]
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The unique ID of the\s
+
+  snow-properties-pagination-description:
+    description: The description must be "The pagination details.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.pagination
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The pagination details\.$
+
+  snow-properties-pagination-page_size-description:
+    description: The description must be "The page size you requested.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.page_size
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The page size you requested\.$
+
+  snow-properties-pagination-page_number-description:
+    description: The description must be "The page number you requested.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.page_number
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The page number you requested\.$
+
+  snow-properties-pagination-total_pages-description:
+    description: The description must be "The total number of pages.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.total_pages
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The total number of pages\.$
+
+  snow-properties-pagination-total_items-description:
+    description: The description must be "The total number of items.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.total_items
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^The total number of items\.$
+
+  snow-properties-pagination-page_size-and-page_number:
+    description: Must have both page_size and page_number or neither.
+    message: "{{path}} | {{description}} See the pagination section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#pagination."
+    severity: error
+    given: $..schemas..properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          or:
+            allOf:
+              - required: ['page_size']
+              - required: ['page_number']
+          not:
+              oneOf:
+                - required: ['page_size']
+                - required: ['page_number']
+
+  snow-properties-pagination-total_items-and-total_pages:
+    description: Must have both total_pages and total_items or neither.
+    message: "{{path}} | {{description}} See the pagination section here: https://backstage.mgmt-snowsoftware.io/docs/default/system/api/SnowAtlasRESTStyleGuide/#pagination."
+    severity: warn
+    given: $..schemas..properties
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          or:
+            allOf:
+              - required: ['total_pages']
+              - required: ['total_items']
+          not:
+              oneOf:
+                - required: ['total_pages']
+                - required: ['total_items']
+
+  snow-properties-items-description:
+    description: The description must start with "A collection of ".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties.items
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^A collection of\s
+
+  snow-properties-links:
+    description: If this property represents HATEOAS links, it must be called "_links".
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..schemas..properties
+    then:
+      field: links
+      function: falsy
+
+  snow-properties-_links-description:
+    description: The description must be "A collection of links to related resources.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..schemas..properties._links
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^A collection of links to related resources\.$
+
+  snow-properties-require-description:
+    description: All properties must have a description.
+    message: "{{path}} | {{description}}"
+    severity: error
+    resolved: false
+    given: $..properties[?(@object() && @.$ref == undefined)]
+    then:
+      field: description
+      function: truthy
+
+  snow-properties-require-example:
+    description: All properties should have an example.
+    message: "{{path}} | {{description}}"
+    severity: warn
+    resolved: false
+    given: $..[?(@property != 'Error' && @property != 'ErrorContent')].properties[?(@object() && @.$ref == undefined && @.oneOf == undefined && @.type != 'array' && @.type != 'boolean' && @.format != 'date-time' && @.format != 'date')]
+    then:
+      field: example
+      function: truthy
+
+  snow-properties-temporal-no-example:
+    description: Date/time properties should not have an example.
+    message: "{{path}} | {{description}}"
+    severity: warn
+    resolved: false
+    given: $..properties[?(@object() && @.$ref == undefined && (@.format == 'date-time' || @.format == 'date'))]
+    then:
+      field: example
+      function: falsy
+
+  snow-properties-temporal-format:
+    description: If this property represents a date/time, it should be of type 'string' with format 'date' or 'date-time'.
+    message: "{{property}} | {{description}}"
+    severity: warn
+    given: $.components.schemas..properties[?(@property.startsWith('date') || @property.endsWith('Date') || @property.startsWith('time') || @property.endsWith('Time'))]
+    then: 
+    - field: type
+      function: pattern
+      functionOptions:
+        match: ^string$
+    - field: format
+      function: truthy
+    - field: format
+      function: pattern
+      functionOptions:
+        match: ^(date|date-time)$
+      
+
+# REQUESTS
+
+  snow-requests-body-not-allowed:
+    description: A get or delete operation must not accept a request body.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].[get,delete]
+    then:
+      field: requestBody
+      function: falsy
+
+  snow-requests-body-allowed-json:
+    description: Request type must be "application/json".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].[post,put].requestBody.content
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+            - required: ['application/json']
+    
+  snow-requests-body-patch-mime-type:
+    description: Request type must be "application/json-patch+json" or "application/merge-patch+json".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].patch.requestBody.content
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          anyOf:
+           - required: ['application/json-patch+json']
+           - required: ['application/merge-patch+json']
+
+
+# RESPONSES
+
+  snow-responses-200-description:
+    description: The description must be "OK - Your request succeeded.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.200
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^OK - Your request succeeded.$
+
+  snow-responses-201-description:
+    description: The description must be "Created - Your request created something new. Usually, this is a call that used the POST method and will allow a GET method to retrieve it later.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.201
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: Created - Your request created something new. Usually, this is a call that used the POST method and will allow a GET method to retrieve it later.$
+
+  snow-responses-202-description:
+    description: The description must be "Accepted - Your request requires more time for the service to process.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.202
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Accepted - Your request requires more time for the service to process.$
+
+  snow-responses-204-description:
+    description: The description must be "No Content - Your request succeeded, but the response message was empty.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.204
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^No Content - Your request succeeded, but the response message was empty.$
+
+  snow-responses-206-description:
+    description: The description must be "Partial Content - Your request to read part of a large binary object succeeded.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.206
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Partial Content - Your request to read part of a large binary object succeeded.$
+
+  snow-responses-400-description:
+    description: The description must be "Bad Request - Your request is invalid or improperly formed. Consequently, the API server could not understand your request.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.400
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Bad Request - Your request is invalid or improperly formed. Consequently, the API server could not understand your request.$
+
+  snow-responses-400-example:
+    description: 'The example response should be: {"error": {"code": 400, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.400..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 400
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-401-description:
+    description: The description must be "Unauthorized - You are not authorized to make the request. This could be because the token is expired or revoked.The recommended action is to reauthenticate and retry once.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.401
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Unauthorized - You are not authorized to make the request. This could be because the token is expired or revoked.The recommended action is to reauthenticate and retry once.$
+
+  snow-responses-401-example:
+    description: 'The example response should be: {"error": {"code": 401, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.401..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 401
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-403-description:
+    description: The description must be "Forbidden - The operation you requested is forbidden and cannot be completed. This could be because you don't have the required permissions to use the requested endpoint, or the requested endpoint requires purchasing additional features. The recommended action is to abort.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.403
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Forbidden - The operation you requested is forbidden and cannot be completed. This could be because you don't have the required permissions to use the requested endpoint, or the requested endpoint requires purchasing additional features. The recommended action is to abort.$
+
+  snow-responses-403-example:
+    description: 'The example response should be: {"error": {"code": 403, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.403..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 403
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-404-description:
+    description: The description must be "Not Found - The operation you requested failed because a resource associated with your request could not be found.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.404
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Not Found - The operation you requested failed because a resource associated with your request could not be found.$
+
+  snow-responses-404-example:
+    description: "The example response should be: {\"error\": {\"code\": 404, \"message\": \"Resource with ID '32aeda0a-80dc-475a-907f-2d250a3a8614' not found.\"}}."
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.404..example
+    then:
+      - field: error
+        function: truthy
+      - field: error.code
+        function: truthy
+      - field: error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 404
+      - field: error.message
+        function: truthy
+      - field: error.message
+        function: pattern
+        functionOptions:
+          match: ^Resource with ID '32aeda0a-80dc-475a-907f-2d250a3a8614' not found.$
+
+  snow-responses-404-required:
+    description: Must have a 404 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[?(@property.match(/.*\/{.*}.*/))]..responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+            - required: ['404']
+
+  snow-responses-404-prohibited:
+    description: Must not have a 404 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[?(!@property.match(/.*\/{.*}.*/))]..responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          not:
+            oneOf:
+              - required: ['404']
+
+  snow-responses-405-description:
+    description: The description must be "Method Not Allowed - The HTTP method associated with your request is not supported.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.405
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Method Not Allowed - The HTTP method associated with your request is not supported.$
+
+  snow-responses-405-example:
+    description: 'The example response should be: {"error": {"code": 405, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.405..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 405
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-409-description:
+    description: The description must be "Conflict - Your request cannot be completed because the requested operation would conflict with an existing item.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.409
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Conflict - Your request cannot be completed because the requested operation would conflict with an existing item.$
+
+  snow-responses-409-example:
+    description: 'The example response should be: {"error": {"code": 409, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.409..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 409
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-429-description:
+    description: The description must be "Too Many Requests - You have sent too many requests within a given time span.The recommended action is to check the response header for the backoff time. If it exists, it is indicated by the `Retry-After` response header, in seconds. Abort for the duration specified by Retry-After, and retry.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.429
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Too Many Requests - You have sent too many requests within a given time span.The recommended action is to check the response header for the backoff time. If it exists, it is indicated by the `Retry-After` response header, in seconds. Abort for the duration specified by Retry-After, and retry.$
+
+  snow-responses-429-example:
+    description: 'The example response should be: {"error": {"code": 429, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.429..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 429
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-500-description:
+    description: The description must be "Internal Server Error - Your request failed due to an internal error.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.500
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Internal Server Error - Your request failed due to an internal error.$
+
+  snow-responses-500-example:
+    description: 'The example response should be: {"error": {"code": 500, "message": "The service encountered an unexpected condition that prevented it from fulfilling the request."}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.500..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 500
+      - field: example.error.message
+        function: truthy
+      - field: example.error.message
+        function: pattern
+        functionOptions:
+          match: ^The service encountered an unexpected condition that prevented it from fulfilling the request.$
+
+  snow-responses-500-required:
+    description: Must have a 500 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*][*].responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          allOf:
+          - required: ['500']
+
+  snow-responses-501-description:
+    description: The description must be "Not Implemented - The operation you requested has not been implemented.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.501
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Not Implemented - The operation you requested has not been implemented.$
+
+  snow-responses-501-example:
+    description: 'The example response should be: {"error": {"code": 501, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.501..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 501
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-503-description:
+    description: The description must be "Service Unavailable - Your request can not currently be handled by the server. Please try again later.".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $..responses.503
+    then:
+      - field: description
+        function: truthy
+      - field: description
+        function: pattern
+        functionOptions:
+          match: ^Service Unavailable - Your request can not currently be handled by the server. Please try again later.$
+
+  snow-responses-503-example:
+    description: 'The example response should be: {"error": {"code": 503, "message": ...}}.'
+    message: "{{path}} | {{description}}"
+    severity: warn
+    given: $..responses.503..application/json
+    then:
+      - field: example.error
+        function: truthy
+      - field: example.error.code
+        function: truthy
+      - field: example.error.code
+        function: enumeration
+        functionOptions:
+          values:
+            - 503
+      - field: example.error.message
+        function: truthy
+
+  snow-responses-delete-allowed-codes:
+    description: DELETE must have either a 200, 202, or 204 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].delete.responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+           - required: ['200']
+           - required: ['202']
+           - required: ['204']
+
+  snow-responses-get-allowed-codes:
+    description: GET must have a 200 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].get.responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+            - required: ['200']
+
+  snow-responses-patch-allowed-codes:
+    description: PATCH must have either a 200, or 202 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].patch.responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+            - required: ['200']
+            - required: ['202']
+
+  snow-responses-post-allowed-codes:
+    description: POST must have either a 200, 201, or 202 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].post.responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+            - required: ['200']
+            - required: ['201']
+            - required: ['202']
+
+  snow-responses-put-allowed-codes:
+    description: PUT must have either a 200, or 202 response.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*].put.responses
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          oneOf:
+            - required: ['200']
+            - required: ['202']
+
+  snow-responses-204-no-response-body:
+    description: A 204 response must have no response body.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*][*].responses.204
+    then:
+      field: content
+      function: falsy
+
+  snow-responses-body-application-json:
+    description: Response type must by "application/json".
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.paths[*][*].responses..content
+    then:
+      field: application/json
+      function: truthy
+
+  snow-responses-require-example:
+    description: Response must have an example.
+    message: "{{path}} | {{description}}"
+    severity: error
+    given: $.components.responses..application/json
+    then:
+      field: example
+      function: truthy
